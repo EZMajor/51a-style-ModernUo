@@ -24,6 +24,7 @@ New Player Experience
 Crafting & BOD System
 Glicko-2 Rating System
 Social Systems
+Tournament System
 Infrastructure & Performance
 Security
 NPC Systems
@@ -213,7 +214,7 @@ Equip (only one at a time)
 Timer does NOT start until first equip
 Talismans can be traded/sold before first equip
 Once equipped, timer begins countdown
-Timer pauses when unequipped? (TBD - specify duration behavior)
+Timer PAUSES when unequipped (may adjust for balance later)
 
 5.4 PvP Disable Mechanic
 csharppublic static class TalismanManager
@@ -245,9 +246,23 @@ csharppublic static class TalismanManager
 6. Faction System (VvV)
 6.1 Structure
 
-3 Factions (names TBD - placeholders: Order of Virtue, Cult of Vice, The Neutrality)
+3 Factions: Vampire, Daemon, Goblin
 Guild-based membership (solo players cannot participate)
 7-day cooldown on faction changes
+Peaceful Participant Option: Guild members can opt for peaceful status (no PvP outside sieges)
+
+6.2 Siege System
+See VvV_Siege_System.md for complete specification.
+SettingValueBattle Model3-way free-for-allSiege CitiesJhelom, Skara Brae, Yew, TrinsicSiege TriggerOn-demand (minimum players)Siege Duration30 minutesVictory Score10,000 pointsTown ControlPersistent until capturedNPC Discount10% (15% if all 4 cities)
+Dual Currency System
+CurrencySourceUseTradeableFaction PointsAll activitiesSeasonal rankingsNoSilverPvP kills, objectivesTraps, turrets, cosmeticsYes
+Peaceful Participant
+Guild members can choose Peaceful status at guild stone:
+
+Cannot attack or be attacked by enemy factions outside siege zones
+Auto-flagged when entering active siege
+Still contributes via BODs, bounties, faction quests
+24-hour cooldown on status changes
 
 6.2 Sigil Battles
 
@@ -277,6 +292,7 @@ Reward: Faction points per task completed
 Daily Faction Quest
 
 Kill mini-boss at one of 4 swamp/desert locations
+Location is announced to players (not a search)
 Integrates with Swamp_and_Desert_Event.md content
 Reward: Bonus faction points
 Can be completed once per day per player
@@ -446,7 +462,44 @@ House Take: 5% of pot (destroyed as gold sink)
 Social feature: No faction integration
 
 
-14. Infrastructure & Performance
+14. Tournament System
+14.1 Overview
+Automated 1v1 single-elimination tournaments run on a fixed schedule with spectator betting and unique cosmetic rewards.
+14.2 Schedule
+DayTimes (EST)Target RegionWednesday2 PM, 8 PMEU, NASaturday2 PM, 8 PMEU, NASunday2 PM, 8 PMEU, NA
+Total: 6 tournaments per week
+14.3 Registration
+
+Opens 15 minutes before tournament
+Closes at tournament start
+Free entry (no fee)
+Minimum 6 players (no maximum)
+Young players cannot participate
+
+14.4 Match Rules
+RuleSettingSelectionRandom (no seeding)FormatSingle eliminationDurationNo time limit (fight to death)Arenas8 parallel (expandable)ByesRound 1 only (early, not late)RefreshPlayers auto-healed between roundsDisconnectCharacter stays in-game
+14.5 Rewards
+RewardDescriptionTrophy StatueHouse deco showing winner, date, participants100 Tournament CoinsCosmetic currencyTitle"Tournament Champion" for 1 week (toggleable)
+Kill Points: Faction points awarded for kills (Glicko weighted), but NO participation rewards.
+14.6 Tournament Coins
+Spent at Tournament NPC for cosmetic transformations:
+
+100 coins: Transform helmet → hat (keeps AR)
+100 coins: Transform helmet → mask (keeps AR)
+More options to be added
+
+14.7 Spectator Betting
+
+Player-to-player betting only
+5% house rake (gold sink)
+Can bet on any pending match
+Cannot bet on own matches
+Cannot bet once match starts
+
+14.8 Glicko Integration
+UseEnabledPlayer selectionNo (random)Kill point weightingYesPost-match rating updateYesFuture team balancingPlanned
+
+15. Infrastructure & Performance
 14.1 Performance Targets
 SystemTargetNotesMicrotick cycle<10ms @ 35% load50Hz engineDatabase connection<5msConnection poolingPlayer read ops<10ms medianHot pathPlayer write ops<25msBatchedConcurrent connections5,000+PgBouncer
 14.2 Database Configuration
@@ -485,7 +538,7 @@ Priority 2: Point calculations (defer if over budget)
 Priority 3: UI updates (skip if over budget)
 
 
-15. Security
+16. Security
 15.1 Authentication Flow
 
 Discord OAuth → Launcher
@@ -521,7 +574,7 @@ csharppublic TransferResult TransferGold(Guid transferId, PlayerMobile from, Pla
     }
 }
 
-16. NPC Systems
+17. NPC Systems
 16.1 Town Cryer
 
 Locations: Major towns (Britain, Trinsic, Moonglow, Skara Brae, Jhelom)
@@ -547,7 +600,7 @@ Location: Britain Bank (Trammel)
 Function: Help menu, wiki link, young status management
 
 
-17. Configuration Reference
+18. Configuration Reference
 17.1 Combat Configuration
 csharppublic static class CombatConfig
 {
@@ -587,8 +640,34 @@ csharppublic static class YoungPlayerConfig
     public static bool CanAttackPlayers = false;
     public static bool CanJoinFaction = false;
 }
+18.5 Tournament Configuration
+csharppublic static class TournamentConfig
+{
+    // Timing
+    public static TimeSpan RegistrationWindow = TimeSpan.FromMinutes(15);
+    public static TimeSpan PostFinalWait = TimeSpan.FromSeconds(30);
+    
+    // Participation
+    public static int MinimumPlayers = 6;
+    public static int MaximumPlayers = int.MaxValue; // Uncapped
+    
+    // Arenas
+    public static int ArenaCount = 8;
+    
+    // Rewards
+    public static int WinnerCoinReward = 100;
+    public static TimeSpan TitleDuration = TimeSpan.FromDays(7);
+    
+    // Betting
+    public static double BettingHouseRake = 0.05; // 5%
+    public static int MinimumBet = 1000;
+    
+    // Schedule (EST)
+    public static TimeSpan[] TournamentTimes = { TimeSpan.FromHours(14), TimeSpan.FromHours(20) };
+    public static DayOfWeek[] TournamentDays = { DayOfWeek.Wednesday, DayOfWeek.Saturday, DayOfWeek.Sunday };
+}
 
-18. Implementation Phases
+19. Implementation Phases
 Phase 1: Core Combat (Weeks 1-4)
 
  50Hz microtick engine
@@ -629,15 +708,27 @@ Phase 5: Economy & Housing (Weeks 17-20)
  Poker tables
  Economy monitoring
 
-Phase 6: Polish & Launch (Weeks 21-24)
+Phase 6: Tournament System (Weeks 21-24)
+
+ Tournament arena layout
+ Registration system
+ Bracket generation
+ Match processing
+ Trophy reward item
+ Tournament Coin currency
+ Cosmetic shop NPC
+ Spectator betting
+ Scheduling system
+
+Phase 7: Polish & Launch (Weeks 25-28)
 
  Town Cryer NPC
  Daily bounties
  Faction quests
- Glicko-2 integration
  Wiki documentation
  Performance optimization
  Security audit
+ Load testing
 
 
 Appendix A: Resolved Conflicts
@@ -645,20 +736,7 @@ IDConflictResolution001Talisman/ChivalryChivalry requires active Sampire talisma
 Appendix B: Removed Features
 FeatureReasonML spell predictionComplexity, no training pipelineInterrupt throttleNatural fizzle mechanics sufficientRelic freshness timerUnnecessary complexityHouse taxesDesign decisionPuzzle clue systemDeferred to future
 Appendix C: Open Items (TBD)
-ItemStatusFaction names/themesAwaiting creative inputDaily quest location announcementSearch vs announcedTalisman timer behavior when unequippedDesign decision neededAdditional starter questsTesting will determine
-
----
-
-## Project Links
-
-- **Current Implementation Status**: [Audit v2](Audit_v2.md)
-- **Implementation Index**: ../Implementation/Index.md
-- **Core Engine Designs**: ../Implementation/Core_Engine/
-- **Gameplay System Designs**: ../Implementation/Gameplay_Systems/
-- **Economic Designs**: ../Implementation/Economics_Trade/
-- **Code Location**: ../../Projects/UOContent/
-
----
+ItemStatusTournament Stadium layout/coordinatesDesign neededTournament cosmetic options expansionFuture contentAdditional starter questsTesting will determineFaction-specific visual themesArt direction needed
 
 Document History
 VersionDateChanges1.0.02024-12Initial architecture specification2.0.02025-01-02Comprehensive cohesion review, conflict resolution, professional specifications added

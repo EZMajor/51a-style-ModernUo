@@ -1,26 +1,54 @@
-VvV (Virtue vs Vice) Integration Specification
-51alpha Faction Warfare System
-Document Metadata
+# VvV (Virtue vs Vice) Integration Specification
+## 51alpha Faction Warfare System
 
-Version: v1.0.0
-Last Updated: 2025-01-02
-Authors: 51alpha Development Team
-Applicable ModernUO Version: v24.0.0+
-PR Ready: No (Conceptual Design)
-Base System: ModernUO VvV Engine (UOContent/Engines/VvV)
+### Document Metadata
+- **Version**: v1.0.0
+- **Last Updated**: 2025-01-02
+- **Authors**: 51alpha Development Team
+- **Applicable ModernUO Version**: v24.0.0+
+- **PR Ready**: No (Conceptual Design)
+- **Base System**: ModernUO VvV Engine (UOContent/Engines/VvV)
 
+---
 
-1. Executive Summary
-The 51alpha faction system adapts ModernUO's existing Virtue vs Vice (VvV) engine to support a 3-faction guild-based territorial competition with sigil capture events, Glicko-2 weighted point scoring, and quarterly seasonal rewards. This document specifies all customizations required to transform the base VvV system into the 51alpha faction experience.
-Key Design Decisions
-DecisionChoiceRationaleFaction Count3Enables natural 2v1 underdog dynamicsParticipationGuild-basedEncourages group play and coordinationTown ControlTemporary (5 min)Rewards active play, not campingPoint WeightingGlicko-2Prevents farming low-skill playersSeason LengthQuarterly (3 months)Meaningful progression + fresh starts
+## 1. Executive Summary
 
-2. Faction Structure
-2.1 The Three Factions
-FactionThemeColorPrimary TownOrder of VirtueHonor, Justice, LightBlue (0x59)BritainCult of VicePower, Ambition, ShadowRed (0x21)TrinsicThe NeutralityBalance, Trade, PragmatismGreen (0x3F)Moonglow
-Note: Faction names and themes are placeholders - adjust to your lore.
-2.2 Guild Faction Membership
-csharppublic class FactionGuildManager
+The 51alpha faction system adapts ModernUO's existing Virtue vs Vice (VvV) engine to support a **3-faction guild-based territorial competition** with sigil capture events, Glicko-2 weighted point scoring, and quarterly seasonal rewards. This document specifies all customizations required to transform the base VvV system into the 51alpha faction experience.
+
+### Key Design Decisions
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Faction Count | 3 | Enables natural 2v1 underdog dynamics |
+| Participation | Guild-based | Encourages group play and coordination |
+| Town Control | Temporary (5 min) | Rewards active play, not camping |
+| Point Weighting | Glicko-2 | Prevents farming low-skill players |
+| Season Length | Quarterly (3 months) | Meaningful progression + fresh starts |
+
+---
+
+## 2. Faction Structure
+
+### 2.1 The Three Factions
+
+| Faction | Theme | Color | Primary Town |
+|---------|-------|-------|--------------|
+| **Vampire** | Blood, Night, Immortality | Red (0x21) | Britain |
+| **Daemon** | Fire, Chaos, Power | Orange (0x30) | Trinsic |
+| **Goblin** | Cunning, Trade, Resourcefulness | Green (0x3F) | Moonglow |
+
+### 2.2 Related Documents
+
+- **VvV_Siege_System.md**: Complete city siege warfare specification
+  - 3-way free-for-all battles in Jhelom, Skara Brae, Yew, Trinsic
+  - Persistent town control with NPC discounts (10-15%)
+  - Trap and turret defense systems
+  - Silver currency for PvP rewards
+  - Peaceful participant option for non-PvP guild members
+
+### 2.2 Guild Faction Membership
+
+```csharp
+public class FactionGuildManager
 {
     // Cooldown between faction changes
     private static readonly TimeSpan FactionChangeCooldown = TimeSpan.FromDays(7);
@@ -83,8 +111,12 @@ csharppublic class FactionGuildManager
         }
     }
 }
-2.3 Solo Player Restriction
-csharp// Solo players cannot participate in faction content
+```
+
+### 2.3 Solo Player Restriction
+
+```csharp
+// Solo players cannot participate in faction content
 public static bool CanParticipateInFaction(PlayerMobile player)
 {
     if (player.Guild == null)
@@ -101,14 +133,33 @@ public static bool CanParticipateInFaction(PlayerMobile player)
     
     return true;
 }
+```
 
-3. Sigil Battle System
-3.1 Sigil Locations
+---
+
+## 3. Sigil Battle System
+
+### 3.1 Sigil Locations
+
 Sigils spawn at preset locations across the world. These are the objectives for faction PvP.
-LocationMapCoordinatesTerrain TypeBritain CrossroadsFelucca1432, 1698UrbanTrinsic South GateFelucca1836, 2780UrbanMoonglow Mage TowerFelucca4445, 1128ArcaneSkara Brae DocksFelucca642, 2236CoastalJhelom ArenaFelucca1333, 3784ArenaYew CryptsFelucca548, 1024ForestMinoc MinesFelucca2580, 510MountainVesper BridgeFelucca2892, 684Bridge
-Minimum 8 sigil locations for variety. Add more as needed.
-3.2 Battle Frequency & Configuration
-csharppublic static class VvVConfig
+
+| Location | Map | Coordinates | Terrain Type |
+|----------|-----|-------------|--------------|
+| Britain Crossroads | Felucca | 1432, 1698 | Urban |
+| Trinsic South Gate | Felucca | 1836, 2780 | Urban |
+| Moonglow Mage Tower | Felucca | 4445, 1128 | Arcane |
+| Skara Brae Docks | Felucca | 642, 2236 | Coastal |
+| Jhelom Arena | Felucca | 1333, 3784 | Arena |
+| Yew Crypts | Felucca | 548, 1024 | Forest |
+| Minoc Mines | Felucca | 2580, 510 | Mountain |
+| Vesper Bridge | Felucca | 2892, 684 | Bridge |
+
+*Minimum 8 sigil locations for variety. Add more as needed.*
+
+### 3.2 Battle Frequency & Configuration
+
+```csharp
+public static class VvVConfig
 {
     // Battle timing - adjustable at runtime via admin command
     public static TimeSpan TimeBetweenBattles { get; set; } = TimeSpan.FromMinutes(60);
@@ -133,7 +184,11 @@ csharppublic static class VvVConfig
         // Example: [vvv config TimeBetweenBattles 30
     }
 }
-3.3 Battle Lifecycle
+```
+
+### 3.3 Battle Lifecycle
+
+```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                        SIGIL BATTLE LIFECYCLE                           │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -148,8 +203,12 @@ csharppublic static class VvVConfig
   │                 │ Players gather   │                  │ Quarterly totals
   │ -5 minutes      │ -1 minute        │ 20 minutes       │ +5 minutes
   │                 │                  │                  │
-3.4 Sigil Capture Mechanics
-csharppublic class VvVSigil : Item
+```
+
+### 3.4 Sigil Capture Mechanics
+
+```csharp
+public class VvVSigil : Item
 {
     private Faction _controllingFaction;
     private DateTime _captureStartTime;
@@ -237,9 +296,14 @@ csharppublic class VvVSigil : Item
         }
     }
 }
-3.5 Town Control Benefits
+```
+
+### 3.5 Town Control Benefits
+
 When a faction captures a sigil, they gain temporary (5 minute) control of the associated town:
-csharppublic class TownControlManager
+
+```csharp
+public class TownControlManager
 {
     private static Dictionary<Town, (Faction Faction, DateTime ExpiresAt)> _activeControl = new();
     
@@ -305,10 +369,16 @@ csharppublic class TownControlManager
         };
     }
 }
+```
 
-4. Point Scoring System
-4.1 Glicko-2 Weighted Kill Points
-csharppublic static class FactionPointManager
+---
+
+## 4. Point Scoring System
+
+### 4.1 Glicko-2 Weighted Kill Points
+
+```csharp
+public static class FactionPointManager
 {
     public static void OnPlayerKill(PlayerMobile killer, PlayerMobile victim)
     {
@@ -380,10 +450,22 @@ csharppublic static class FactionPointManager
         FactionAnalytics.LogPointAward(player, faction, finalPoints, reason);
     }
 }
-4.2 Point Sources Summary
-SourceBase PointsGlicko WeightedUnderdog BonusPlayer Kill100Yes (0.25x - 2.0x)YesSigil Capture500NoYesSigil Hold (per minute)50NoYesDaily Bounty Task50NoYesDaily Faction Quest150NoYes
-4.3 Faction Standing Calculation
-csharppublic static class FactionStandingManager
+```
+
+### 4.2 Point Sources Summary
+
+| Source | Base Points | Glicko Weighted | Underdog Bonus |
+|--------|-------------|-----------------|----------------|
+| Player Kill | 100 | Yes (0.25x - 2.0x) | Yes |
+| Sigil Capture | 500 | No | Yes |
+| Sigil Hold (per minute) | 50 | No | Yes |
+| Daily Bounty Task | 50 | No | Yes |
+| Daily Faction Quest | 150 | No | Yes |
+
+### 4.3 Faction Standing Calculation
+
+```csharp
+public static class FactionStandingManager
 {
     // Called after any point change to recalculate standings
     public static void RecalculateStandings()
@@ -415,11 +497,18 @@ csharppublic static class FactionStandingManager
         };
     }
 }
+```
 
-5. Daily Faction Content
-5.1 Daily Bounties
+---
+
+## 5. Daily Faction Content
+
+### 5.1 Daily Bounties
+
 Three tasks generated daily, same for all players:
-csharppublic static class DailyBountyManager
+
+```csharp
+public static class DailyBountyManager
 {
     private static List<DailyBounty> _todaysBounties = new();
     private static DateTime _lastGeneration = DateTime.MinValue;
@@ -468,8 +557,12 @@ csharppublic static class DailyBountyManager
         }
     }
 }
-5.2 Daily Faction Quest (Swamp/Desert Mini-Boss)
-csharppublic static class DailyFactionQuestManager
+```
+
+### 5.2 Daily Faction Quest (Swamp/Desert Mini-Boss)
+
+```csharp
+public static class DailyFactionQuestManager
 {
     // The 4 possible mini-boss locations
     private static readonly Point3D[] BossLocations = new[]
@@ -524,8 +617,12 @@ csharppublic static class DailyFactionQuestManager
         Timer.StartTimer(TimeSpan.FromMinutes(15), SpawnDailyBoss);
     }
 }
-5.3 Rare Faction Deco Drops
-csharppublic static class FactionDecoDrops
+```
+
+### 5.3 Rare Faction Deco Drops
+
+```csharp
+public static class FactionDecoDrops
 {
     // 0.01% chance on any monster kill
     private const double DropChance = 0.0001;
@@ -585,9 +682,15 @@ public abstract class BaseFactionClothing : BaseClothing
         return true;
     }
 }
+```
 
-6. Quarterly Season System
-6.1 Season Lifecycle
+---
+
+## 6. Quarterly Season System
+
+### 6.1 Season Lifecycle
+
+```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                      QUARTERLY SEASON LIFECYCLE                         │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -601,8 +704,12 @@ public abstract class BaseFactionClothing : BaseClothing
   │ Standings update    │ Final battle           │ Glicko soft reset
   │                     │ Leaderboard freeze     │ New season begins
   │                     │                        │
-6.2 Season Reset Logic
-csharppublic static class SeasonManager
+```
+
+### 6.2 Season Reset Logic
+
+```csharp
+public static class SeasonManager
 {
     public static void ProcessSeasonReset()
     {
@@ -662,8 +769,12 @@ csharppublic static class SeasonManager
         }
     }
 }
-6.3 Glicko Soft Reset
-csharppublic static class GlickoManager
+```
+
+### 6.3 Glicko Soft Reset
+
+```csharp
+public static class GlickoManager
 {
     public static void ProcessSeasonReset()
     {
@@ -681,9 +792,14 @@ csharppublic static class GlickoManager
         }
     }
 }
+```
 
-7. Admin Commands
-csharppublic class VvVAdminCommands
+---
+
+## 7. Admin Commands
+
+```csharp
+public class VvVAdminCommands
 {
     [Usage("[vvv start")]
     [Description("Immediately starts a sigil battle")]
@@ -734,37 +850,45 @@ csharppublic class VvVAdminCommands
         }
     }
 }
+```
 
-8. Integration with Existing Systems
-8.1 Talisman System
+---
 
-Talismans are disabled during VvV battles (PvP context triggers disable)
-5-minute disable timer starts when player damages/is damaged by enemy faction
-Chivalry access lost during disable period
+## 8. Integration with Existing Systems
 
-8.2 Glicko Rating System
+### 8.1 Talisman System
 
-VvV kills feed into Glicko ratings
-Ratings used for point weighting (prevent farming)
-Soft reset at season end
+- Talismans are **disabled during VvV battles** (PvP context triggers disable)
+- 5-minute disable timer starts when player damages/is damaged by enemy faction
+- Chivalry access lost during disable period
 
-8.3 Town Cryer
+### 8.2 Glicko Rating System
 
-Announces battle scheduling (5 minutes before)
-Announces sigil captures
-Announces town control changes
-Announces new daily bounties
+- VvV kills feed into Glicko ratings
+- Ratings used for point weighting (prevent farming)
+- Soft reset at season end
 
-8.4 Economy
+### 8.3 Town Cryer
 
-Town control grants temporary vendor discounts (10-15%)
-No permanent economic advantages
-All gold sinks remain functional during battles
+- Announces battle scheduling (5 minutes before)
+- Announces sigil captures
+- Announces town control changes
+- Announces new daily bounties
 
+### 8.4 Economy
 
-9. Performance Considerations
-9.1 Battle Processing Budget
-csharp// Target: 5ms per battle tick with 100 participants
+- Town control grants temporary vendor discounts (10-15%)
+- No permanent economic advantages
+- All gold sinks remain functional during battles
+
+---
+
+## 9. Performance Considerations
+
+### 9.1 Battle Processing Budget
+
+```csharp
+// Target: 5ms per battle tick with 100 participants
 public class VvVBattleProcessor
 {
     private const int TickBudgetMs = 5;
@@ -795,8 +919,12 @@ public class VvVBattleProcessor
         }
     }
 }
-9.2 Point Batching
-csharp// Batch point updates to reduce database writes
+```
+
+### 9.2 Point Batching
+
+```csharp
+// Batch point updates to reduce database writes
 public class PointBatcher
 {
     private ConcurrentQueue<PointUpdate> _pending = new();
@@ -822,10 +950,16 @@ public class PointBatcher
         }
     }
 }
+```
 
-10. Testing Procedures
-10.1 Unit Tests
-csharp[TestClass]
+---
+
+## 10. Testing Procedures
+
+### 10.1 Unit Tests
+
+```csharp
+[TestClass]
 public class VvVTests
 {
     [TestMethod]
@@ -860,25 +994,42 @@ public class VvVTests
         Assert.AreEqual(500, player.FactionPoints);
     }
 }
-10.2 Integration Tests
+```
 
-Full Battle Cycle: Start → Capture → Control → Expiry
-Multi-Faction Combat: 3-way battle scoring
-Season Reset: Points, ratings, rewards distribution
-Daily Content: Bounty generation, quest completion
+### 10.2 Integration Tests
 
+1. **Full Battle Cycle**: Start → Capture → Control → Expiry
+2. **Multi-Faction Combat**: 3-way battle scoring
+3. **Season Reset**: Points, ratings, rewards distribution
+4. **Daily Content**: Bounty generation, quest completion
 
-11. File Modification List
-FileChange TypeRisk LevelUOContent/Engines/VvV/VvVBattle.csModifyMediumUOContent/Engines/VvV/VvVSigil.csModifyMediumSystems/Factions/FactionManager.csNewLowSystems/Factions/FactionPointManager.csNewLowSystems/Factions/FactionStandingManager.csNewLowSystems/Factions/DailyBountyManager.csNewLowSystems/Factions/SeasonManager.csNewLowMobiles/PlayerMobile.csModifyHighGuilds/Guild.csModifyMediumItems/FactionClothing/NewLow
+---
 
-12. Change Log
-v1.0.0 - 2025-01-02 (Initial Specification)
+## 11. File Modification List
 
-Created comprehensive VvV integration specification
-Defined 3-faction guild-based system
-Implemented Glicko-2 weighted point scoring
-Added underdog bonus mechanics (2nd: 2%, 3rd: 5%)
-Specified daily bounties and faction quests
-Designed quarterly season system with soft Glicko reset
-Created rare faction clothing drop system
-Defined sigil capture and temporary town control mechanics
+| File | Change Type | Risk Level |
+|------|-------------|------------|
+| `UOContent/Engines/VvV/VvVBattle.cs` | Modify | Medium |
+| `UOContent/Engines/VvV/VvVSigil.cs` | Modify | Medium |
+| `Systems/Factions/FactionManager.cs` | New | Low |
+| `Systems/Factions/FactionPointManager.cs` | New | Low |
+| `Systems/Factions/FactionStandingManager.cs` | New | Low |
+| `Systems/Factions/DailyBountyManager.cs` | New | Low |
+| `Systems/Factions/SeasonManager.cs` | New | Low |
+| `Mobiles/PlayerMobile.cs` | Modify | High |
+| `Guilds/Guild.cs` | Modify | Medium |
+| `Items/FactionClothing/` | New | Low |
+
+---
+
+## 12. Change Log
+
+### v1.0.0 - 2025-01-02 (Initial Specification)
+- Created comprehensive VvV integration specification
+- Defined 3-faction guild-based system
+- Implemented Glicko-2 weighted point scoring
+- Added underdog bonus mechanics (2nd: 2%, 3rd: 5%)
+- Specified daily bounties and faction quests
+- Designed quarterly season system with soft Glicko reset
+- Created rare faction clothing drop system
+- Defined sigil capture and temporary town control mechanics

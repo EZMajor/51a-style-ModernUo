@@ -1,24 +1,39 @@
-New Player Experience Specification
-51alpha Onboarding System
-Document Metadata
+# New Player Experience Specification
+## 51alpha Onboarding System
 
-Version: v2.0.0
-Last Updated: 2025-01-03
-Authors: 51alpha Development Team
-Applicable ModernUO Version: v24.0.0+
-PR Ready: No (Conceptual Design)
-Inspiration: UO Outlands Wiki, Imagine Nation skill progression
+### Document Metadata
+- **Version**: v1.0.0
+- **Last Updated**: 2025-01-02
+- **Authors**: 51alpha Development Team
+- **Applicable ModernUO Version**: v24.0.0+
+- **PR Ready**: No (Conceptual Design)
+- **Inspiration**: UO Outlands Wiki, Imagine Nation skill progression
 
+---
 
-1. Executive Summary
-The new player experience is designed to get players into meaningful gameplay quickly while teaching core mechanics. The system uses a ferry-based island quest chain in Trammel (safe from PK) that grants combat skills through simple hunting tasks, combined with a 2-week Young Player protection system and comprehensive wiki documentation.
-Design Philosophy
-PrincipleImplementationFast to competence~2-3 hours to GM combat skills via questsLearn by doingQuests teach mechanics through gameplaySafe learning environmentTrammel islands, no PK possibleNo AFK grindingQuest-based progression, not time-gatedEncourage social playFactions require guild membership
+## 1. Executive Summary
 
-2. Young Player Protection System
-2.1 Overview
+The new player experience is designed to get players into meaningful gameplay quickly while teaching core mechanics. The system uses a **ferry-based island quest chain** in Trammel (safe from PK) that grants combat skills through simple hunting tasks, combined with a **2-week Young Player protection** system and comprehensive **wiki documentation**.
+
+### Design Philosophy
+| Principle | Implementation |
+|-----------|----------------|
+| Fast to competence | ~2-3 hours to GM combat skills via quests |
+| Learn by doing | Quests teach mechanics through gameplay |
+| Safe learning environment | Trammel islands, no PK possible |
+| No AFK grinding | Quest-based progression, not time-gated |
+| Encourage social play | Factions require guild membership |
+
+---
+
+## 2. Young Player Protection System
+
+### 2.1 Overview
+
 ModernUO includes a built-in Young Player system. We extend it with the following configuration:
-csharppublic static class YoungPlayerConfig
+
+```csharp
+public static class YoungPlayerConfig
 {
     // Duration of young player status
     public static TimeSpan YoungDuration = TimeSpan.FromDays(14); // 2 weeks calendar time
@@ -35,10 +50,25 @@ csharppublic static class YoungPlayerConfig
     // Visual indicator
     public static int YoungHue = 0x35; // Bright green text color for name
 }
-2.2 Young Player Rules
-RuleBehaviorPvP ProtectionCannot be attacked by or attack other playersTheft ProtectionCannot be stolen fromCorpse ProtectionCorpse cannot be looted by other playersMonster CombatNormal - can fight and be killed by monstersGuild MembershipAllowed - can join guildsFaction ParticipationBlocked until young status renouncedDungeon AccessAll dungeons accessibleTradingNormal - can trade with players
-2.3 Renouncing Young Status
-csharppublic class YoungPlayerManager
+```
+
+### 2.2 Young Player Rules
+
+| Rule | Behavior |
+|------|----------|
+| **PvP Protection** | Cannot be attacked by or attack other players |
+| **Theft Protection** | Cannot be stolen from |
+| **Corpse Protection** | Corpse cannot be looted by other players |
+| **Monster Combat** | Normal - can fight and be killed by monsters |
+| **Guild Membership** | Allowed - can join guilds |
+| **Faction Participation** | Blocked until young status renounced |
+| **Dungeon Access** | All dungeons accessible |
+| **Trading** | Normal - can trade with players |
+
+### 2.3 Renouncing Young Status
+
+```csharp
+public class YoungPlayerManager
 {
     // Player can renounce at any time via command or NPC
     [Usage("[renounce")]
@@ -74,8 +104,12 @@ csharppublic class YoungPlayerManager
         }
     }
 }
-2.4 Young Player Visual Indicators
-csharp// In PlayerMobile.cs or name display handler
+```
+
+### 2.4 Young Player Visual Indicators
+
+```csharp
+// In PlayerMobile.cs or name display handler
 public override void GetProperties(ObjectPropertyList list)
 {
     base.GetProperties(list);
@@ -94,10 +128,17 @@ public override int GetHue()
         
     return base.GetHue();
 }
+```
 
-3. Starter Quest System - Ferry Islands
-3.1 Concept Overview
-New players take a special Quest Ferry from Britain docks to a series of training islands in Trammel. Each island has a simple hunting quest that rewards a specific combat skill to GM (100).
+---
+
+## 3. Starter Quest System - Ferry Islands
+
+### 3.1 Concept Overview
+
+New players take a special **Quest Ferry** from Britain docks to a series of training islands in Trammel. Each island has a simple hunting quest that rewards a specific combat skill to GM (100).
+
+```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                      STARTER QUEST FERRY ROUTE                          │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -116,9 +157,14 @@ New players take a special Quest Ferry from Britain docks to a series of trainin
   Lizardman Lair        Imp Grotto        Britain Docks
   Kill 10 lizardmen     Kill 5 imps       Quest complete!
   Reward: 100 Fencing   Reward: 90 Magery Gold bonus: 5,000
-3.2 Quest Ferry NPC
+```
+
+### 3.2 Quest Ferry NPC
+
 Located at Britain Docks (Trammel side):
-csharppublic class QuestFerrymaster : BaseVendor
+
+```csharp
+public class QuestFerrymaster : BaseVendor
 {
     public override void OnDoubleClick(Mobile from)
     {
@@ -177,8 +223,12 @@ csharppublic class QuestFerrymaster : BaseVendor
         };
     }
 }
-3.3 Quest Definitions
-csharppublic static class StarterQuestDefinitions
+```
+
+### 3.3 Quest Definitions
+
+```csharp
+public static class StarterQuestDefinitions
 {
     public static readonly StarterQuest[] Quests = new[]
     {
@@ -273,8 +323,12 @@ public class StarterQuest
     public string IslandName { get; set; }
     public string IntroText { get; set; }
 }
-3.4 Quest Progress Tracking
-csharp// Add to PlayerMobile.cs
+```
+
+### 3.4 Quest Progress Tracking
+
+```csharp
+// Add to PlayerMobile.cs
 public partial class PlayerMobile
 {
     // Starter quest tracking
@@ -303,8 +357,12 @@ public partial class PlayerMobile
         set => _starterQuestsCompleted = value;
     }
 }
-3.5 Kill Tracking & Quest Completion
-csharppublic static class StarterQuestManager
+```
+
+### 3.5 Kill Tracking & Quest Completion
+
+```csharp
+public static class StarterQuestManager
 {
     public static void OnCreatureKilled(BaseCreature creature, PlayerMobile killer)
     {
@@ -377,8 +435,12 @@ csharppublic static class StarterQuestManager
         player.MoveToWorld(new Point3D(1496, 1628, 10), Map.Trammel);
     }
 }
-3.6 Anti-Farming Protection
-csharppublic static class StarterQuestManager
+```
+
+### 3.6 Anti-Farming Protection
+
+```csharp
+public static class StarterQuestManager
 {
     // Prevent completed players from farming islands
     public static bool CanEnterStarterIsland(PlayerMobile player, int islandNumber)
@@ -413,8 +475,12 @@ csharppublic static class StarterQuestManager
         }
     }
 }
-3.7 Island Region Definitions
-csharppublic class StarterIslandRegion : BaseRegion
+```
+
+### 3.7 Island Region Definitions
+
+```csharp
+public class StarterIslandRegion : BaseRegion
 {
     private readonly int _islandNumber;
     
@@ -448,10 +514,17 @@ csharppublic class StarterIslandRegion : BaseRegion
     public override bool AllowHousing(Mobile from, Point3D p) => false;
     public override bool AllowVehicles => false;
 }
+```
 
-4. Website Wiki System
-4.1 Wiki Structure
+---
+
+## 4. Website Wiki System
+
+### 4.1 Wiki Structure
+
 Based on UO Outlands wiki (https://wiki.uooutlands.com/Main_Page), create comprehensive documentation:
+
+```
 51alpha Wiki Structure
 ├── Getting Started
 │   ├── Creating Your Character
@@ -502,9 +575,14 @@ Based on UO Outlands wiki (https://wiki.uooutlands.com/Main_Page), create compre
     ├── Server Rules
     ├── PvP Etiquette
     └── Reporting Issues
-4.2 Key Wiki Pages Content
-4.2.1 Sphere-Style PvP Page
-markdown# Sphere-Style PvP Combat
+```
+
+### 4.2 Key Wiki Pages Content
+
+#### 4.2.1 Sphere-Style PvP Page
+
+```markdown
+# Sphere-Style PvP Combat
 
 51alpha uses **Sphere-style** combat mechanics, which differ significantly from OSI/EA Ultima Online.
 
@@ -540,8 +618,12 @@ You can **always move** while casting unless paralyzed. Use this to:
 2. **Use terrain** - Break LoS around corners to cause enemy fizzles
 3. **Watch your mana** - Fizzles are expensive
 4. **Join a guild** - Faction PvP requires guild membership
-4.2.2 Talisman System Page
-markdown# Talisman System
+```
+
+#### 4.2.2 Talisman System Page
+
+```markdown
+# Talisman System
 
 Talismans are powerful items that grant **PvM bonuses** to specific playstyles. They are disabled in PvP combat.
 
@@ -575,10 +657,16 @@ This ensures PvP remains skill-based without PvM advantages.
 - Talisman timer only starts when **first equipped**
 - You can trade/sell talismans before equipping
 - Once equipped, timer begins counting down
+```
 
-5. In-Game Help System
-5.1 Help Menu NPC
-csharppublic class NewPlayerGuide : BaseVendor
+---
+
+## 5. In-Game Help System
+
+### 5.1 Help Menu NPC
+
+```csharp
+public class NewPlayerGuide : BaseVendor
 {
     public override void OnDoubleClick(Mobile from)
     {
@@ -642,8 +730,12 @@ public class NewPlayerGuideGump : Gump
         }
     }
 }
-5.2 Context-Sensitive Tips
-csharppublic static class NewPlayerTips
+```
+
+### 5.2 Context-Sensitive Tips
+
+```csharp
+public static class NewPlayerTips
 {
     private static HashSet<(Serial, string)> _shownTips = new();
     
@@ -691,9 +783,15 @@ csharppublic static class NewPlayerTips
             "Joining a guild lets you participate in Faction warfare for bonus rewards!");
     }
 }
+```
 
-6. First Login Experience
-6.1 Character Creation Flow
+---
+
+## 6. First Login Experience
+
+### 6.1 Character Creation Flow
+
+```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                     FIRST LOGIN EXPERIENCE                               │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -706,8 +804,12 @@ csharppublic static class NewPlayerTips
   │ Default skills     │ (Trammel)          │ Highlight Quest Ferry
   │ Starter equipment  │                    │ New Player Guide NPC
   │                    │                    │ Young status explained
-6.2 Welcome Message
-csharppublic static class FirstLoginHandler
+```
+
+### 6.2 Welcome Message
+
+```csharp
+public static class FirstLoginHandler
 {
     public static void OnFirstLogin(PlayerMobile player)
     {
@@ -742,8 +844,12 @@ csharppublic static class FirstLoginHandler
         });
     }
 }
-6.3 Starter Equipment
-csharppublic static class StarterEquipment
+```
+
+### 6.3 Starter Equipment
+
+```csharp
+public static class StarterEquipment
 {
     public static void EquipNewPlayer(PlayerMobile player)
     {
@@ -776,63 +882,77 @@ csharppublic static class StarterEquipment
         player.AddToBackpack(book);
     }
 }
+```
 
-7. Skill Progression Summary
-7.1 Post-Quest Skill State
+---
+
+## 7. Skill Progression Summary
+
+### 7.1 Post-Quest Skill State
+
 After completing all starter quests:
-SkillValueSourceSwordsmanship100.0Quest 1: Rabbit IslandTactics100.0Quest 2: Skeleton IsleMace Fighting100.0Quest 3: Orc CampFencing100.0Quest 4: Lizardman LairMagery90.0Quest 5: Imp Grotto
-7.2 Remaining Progression
+
+| Skill | Value | Source |
+|-------|-------|--------|
+| Swordsmanship | 100.0 | Quest 1: Rabbit Island |
+| Tactics | 100.0 | Quest 2: Skeleton Isle |
+| Mace Fighting | 100.0 | Quest 3: Orc Camp |
+| Fencing | 100.0 | Quest 4: Lizardman Lair |
+| Magery | 90.0 | Quest 5: Imp Grotto |
+
+### 7.2 Remaining Progression
+
 Players still need to develop:
+- **Magery to 100** (final 10 points through normal play)
+- **Resisting Spells** (critical for PvP)
+- **Evaluating Intelligence** (spell damage)
+- **Meditation** (mana regeneration)
+- **Anatomy** (healing effectiveness)
+- **Healing** (bandage skill)
+- **Archery** (if desired)
+- **Crafting skills** (if desired)
 
-Magery to 100 (final 10 points through normal play)
-Resisting Spells (critical for PvP)
-Evaluating Intelligence (spell damage)
-Meditation (mana regeneration)
-Anatomy (healing effectiveness)
-Healing (bandage skill)
-Archery (if desired)
-Crafting skills (if desired)
+This ensures players are **combat-ready quickly** but still have meaningful progression goals.
 
-This ensures players are combat-ready quickly but still have meaningful progression goals.
+---
 
-8. Testing Checklist
-8.1 Young Player System
+## 8. Testing Checklist
 
- Young status lasts exactly 14 days
- Cannot be attacked by players
- Cannot attack players
- Can be killed by monsters
- Can join guilds
- Cannot join factions until renounced
- Renounce command works correctly
- Visual indicator (green name) displays
+### 8.1 Young Player System
+- [ ] Young status lasts exactly 14 days
+- [ ] Cannot be attacked by players
+- [ ] Cannot attack players
+- [ ] Can be killed by monsters
+- [ ] Can join guilds
+- [ ] Cannot join factions until renounced
+- [ ] Renounce command works correctly
+- [ ] Visual indicator (green name) displays
 
-8.2 Starter Quests
+### 8.2 Starter Quests
+- [ ] Quest Ferry NPC functional
+- [ ] Transport to each island works
+- [ ] Kill tracking accurate
+- [ ] Skills awarded correctly
+- [ ] Cannot re-enter completed islands
+- [ ] No gold drops on starter islands
+- [ ] Final gold reward given
+- [ ] Teleport back to Britain on completion
 
- Quest Ferry NPC functional
- Transport to each island works
- Kill tracking accurate
- Skills awarded correctly
- Cannot re-enter completed islands
- No gold drops on starter islands
- Final gold reward given
- Teleport back to Britain on completion
+### 8.3 New Player Guide
+- [ ] NPC accessible at Britain Bank
+- [ ] All help topics display correctly
+- [ ] Wiki link opens browser
+- [ ] Context-sensitive tips trigger once only
 
-8.3 New Player Guide
+---
 
- NPC accessible at Britain Bank
- All help topics display correctly
- Wiki link opens browser
- Context-sensitive tips trigger once only
+## 9. Change Log
 
-
-9. Change Log
-v1.0.0 - 2025-01-02 (Initial Specification)
-
-Created comprehensive new player experience specification
-Defined 2-week Young Player protection system
-Designed 5-quest ferry island training system
-Skills awarded: Swords, Tactics, Macing, Fencing, 90 Magery
-Specified wiki structure based on UO Outlands
-Created in-game help system with context-sensitive tips
-Defined first login experience flow
+### v1.0.0 - 2025-01-02 (Initial Specification)
+- Created comprehensive new player experience specification
+- Defined 2-week Young Player protection system
+- Designed 5-quest ferry island training system
+- Skills awarded: Swords, Tactics, Macing, Fencing, 90 Magery
+- Specified wiki structure based on UO Outlands
+- Created in-game help system with context-sensitive tips
+- Defined first login experience flow
