@@ -55,7 +55,7 @@ The 51alpha project consists of three primary systems that work together to deli
 │   ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐                    │
 │   │   UO Protocol   │  │  Game Logic     │  │  Web API Client │                    │
 │   └─────────────────┘  └─────────────────┘  └─────────────────┘                    │
-│   FactionEngine • TalismanSystem • SiegeManager • BODSystem                        │
+│   FactionEngine • TalismanSystem • SiegeManager • TournamentManager • BODSystem    │
 └─────────────────────────────────────────────────────────────────────────────────────┘
 1.2 Communication Channels
 ChannelFromToProtocolAuth MethodLauncher → APILauncherWebsiteHTTPS RESTJWT BearerAPI → DiscordWebsiteDiscordHTTPS RESTOAuth2Game → APIModernUOWebsiteHTTPS RESTAPI KeyAPI → GameWebsiteModernUOHTTPS RESTAPI KeyClient → GameClassicUOModernUOTCPUO ProtocolBrowser → APIUserWebsiteHTTPSJWT/SessionSignalRAPILauncher/BrowserWebSocketJWT

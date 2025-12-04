@@ -65,7 +65,7 @@ Unit tests for cast/swing delays, integration for full combats.
 
 ### Step 5: Testing and Polish
 1. Load test with 100+ concurrent players in tournaments
-2. Verify spell interruption zero-penalty refunds work correctly
+2. Verify spell interruption resource-consuming fizzle works correctly
 3. Performance profile and optimize microtick processing
 
 ## Performance Benchmarks
@@ -124,7 +124,7 @@ public void ArenaRatingSystem_UpdatesRatingsOnWinLoss()
 ```
 
 ### Integration Testing (Live Server)
-1. **Spell Casting Under Combat**: Test zero-penalty interruptions work in PvP
+1. **Spell Casting Under Combat**: Test resource-consuming fizzle works in PvP
 2. **Tournament Flow**: Complete full tournament cycle (1 hour simulation)
 3. **Rating Accuracy**: Verify Glicko-2 calculations match expected outcomes
 4. **Performance Under Load**: Stress test with 100 simultaneous spell casts
@@ -181,7 +181,7 @@ public void ArenaRatingSystem_UpdatesRatingsOnWinLoss()
 
 ### __Advanced Interruption Features__
 
-- __Zero-Penalty Policy__: Resources refunded on interrupt (premium feature)
+- __Resource-Consuming Policy__: Resources consumed on interrupt (current design)
 - __ML-Predictive Cancellation__: Analyzes cast time >150% average, suggests early termination
 - __Range Evasion Detection__: Target moving >2 tiles away during cast
 - __Performance-Based Throttling__: Max 3 interrupts/second to prevent spam

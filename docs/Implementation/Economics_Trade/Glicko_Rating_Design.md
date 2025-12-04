@@ -8,7 +8,7 @@
 - **PR Ready**: No (Conceptual Design)
 
 ## Overview
-Comprehensive Glicko-2 rating system implementation for precise tournament-quality player matchmaking and leaderboard ranking with Bayesian uncertainty modeling, volatility analysis, and tournament bracket calculations.
+Comprehensive Glicko-2 rating system implementation for precise tournament-quality scoring and leaderboard ranking with Bayesian uncertainty modeling, volatility analysis, and tournament bracket calculations.
 
 ## Algorithms and Logic
 Glicko-2 mathematical algorithms for rating calculations, volatility convergence through iterative Newton-Raphson methods, multi-opponent batch processing for tournament results, and uncertainty decay for inactive players.
