@@ -624,16 +624,15 @@ private static void ProcessSaveQueue()
 ### __Economic Controls__
 
 ```csharp
-// Prevents mass farming exploitation
+// ✅ CORRECT - Relics have no freshness timer
 public static bool ValidateCraftAttempt(PlayerMobile crafter, CraftItem item)
 {
     foreach (var reagent in item.RequiredReagents) {
-        // Timestamp validation (7-day freshness)
-        if (!HasValidReagentTimestamp(crafter, reagent.Type, reagent.Quantity)) {
-            return false; // Prevents relic hoarding
+        // Simple quantity check only - no timers
+        if (RelicInventory.GetRelicCount(crafter, reagent.Tier) < reagent.Quantity) {
+            return false;
         }
     }
-    
     return true;
 }
 ```

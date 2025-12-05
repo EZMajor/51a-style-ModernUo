@@ -790,12 +790,11 @@ __Movement During Spell Cast__:
 
 - Combat system tracks `CombatInterruptType.SpellCast`
 
-- __Phase-based Logic__:
+- __Sphere-Style Movement__: Movement NEVER causes spell interruption
 
-  - First 50% of cast: Allows movement (early phases)
-  - After 50% completion: Full interrupt on movement
+- __Free Casting__: Players can move 100% of the time during spell casting
 
-- __Zero-penalty__: Unlike weapon swings, spells refund all resources
+- __Zero-penalty__: Unlike weapon swings, spells refund all resources on real interrupts
 
 __Damage During Casting__ (Documented but not implemented in combat service):
 

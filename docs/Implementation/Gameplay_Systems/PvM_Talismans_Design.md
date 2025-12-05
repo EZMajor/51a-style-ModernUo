@@ -43,7 +43,92 @@ Timer does NOT start until first equip; Talismans can be traded/sold before firs
 
 Once equipped, timer begins countdown.
 
-Timer pauses when unequipped? (TBD - specify duration behavior).
+Timer pauses on unequip, resumes on re-equip (not reset):
+
+```csharp
+public class TalismanState
+{
+    // When PvP disable started
+    public DateTime DisabledStartedUtc { get; set; }
+
+    // Total time already served while equipped
+    public TimeSpan ElapsedDisableTime { get; set; }
+
+    // When unequipped (null if equipped)
+    public DateTime? UnequippedAtUtc { get; set; }
+
+    // Required total disable time
+    public static readonly TimeSpan RequiredDisableTime = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Check if talisman bonuses are currently available
+    /// </summary>
+    public bool CanUseBonuses()
+    {
+        // Not disabled at all
+        if (DisabledStartedUtc == DateTime.MinValue)
+            return true;
+
+        // Currently unequipped - timer paused, check if already served
+        if (UnequippedAtUtc.HasValue)
+            return ElapsedDisableTime >= RequiredDisableTime;
+
+        // Currently equipped - calculate total time served
+        var currentSession = DateTime.UtcNow - DisabledStartedUtc;
+        var totalServed = ElapsedDisableTime + currentSession;
+
+        return totalServed >= RequiredDisableTime;
+    }
+
+    /// <summary>
+    /// Get remaining disable time
+    /// </summary>
+    public TimeSpan GetRemainingDisableTime()
+    {
+        if (DisabledStartedUtc == DateTime.MinValue)
+            return TimeSpan.Zero;
+
+        TimeSpan totalServed;
+
+        if (UnequippedAtUtc.HasValue)
+        {
+            // Paused - only count previously elapsed time
+            totalServed = ElapsedDisableTime;
+        }
+        else
+        {
+            // Active - count elapsed + current session
+            var currentSession = DateTime.UtcNow - DisabledStartedUtc;
+            totalServed = ElapsedDisableTime + currentSession;
+        }
+
+        var remaining = RequiredDisableTime - totalServed;
+        return remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero;
+    }
+}
+```
+
+**Key Behaviors:**
+
+| Scenario | Timer Behavior |
+|----------|----------------|
+| PvP hit while equipped | Timer starts (5:00) |
+| Unequip at 3:00 remaining | Timer PAUSES at 3:00 |
+| Re-equip after 10 minutes | Timer RESUMES at 3:00 |
+| Serve remaining 3:00 | Bonuses re-enabled |
+| PvP hit while disabled | Timer RESETS to 5:00 |
+
+**Database Schema:**
+
+```sql
+CREATE TABLE s51a_talisman_states (
+    player_serial BIGINT PRIMARY KEY,
+    disabled_started_utc TIMESTAMP WITH TIME ZONE,
+    elapsed_disable_seconds INT DEFAULT 0,
+    unequipped_at_utc TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
 ## PvP Disable Mechanism
 
