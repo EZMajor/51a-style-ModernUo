@@ -157,7 +157,7 @@ public void ArenaRatingSystem_UpdatesRatingsOnWinLoss()
 - Added performance monitoring and anti-cheat validations
 
 
-## Sphere51a Combat & Spellcasting Flowchart
+## Sphere51a Combat & Spell Casting Flow (Revised)
 
 ### __Global 50Hz Microtick Engine (Central Coordinator)__
 
@@ -181,11 +181,10 @@ public void ArenaRatingSystem_UpdatesRatingsOnWinLoss()
 
 ### __Advanced Interruption Features__
 
-- __Resource-Consuming Policy__: Resources consumed on interrupt (current design)
-- __ML-Predictive Cancellation__: Analyzes cast time >150% average, suggests early termination
-- __Range Evasion Detection__: Target moving >2 tiles away during cast
-- __Performance-Based Throttling__: Max 3 interrupts/second to prevent spam
-- __Pattern Learning__: Tracks success rates for predictive recommendations
+- __Costly Interruption Policy__: All interruptions during casting waste already consumed resources
+- __Targeting Validation__: Upfront resource consumption after target selection
+- __Movable Casting__: Casters can move freely during cast delay
+- __Resource Commitment__: Resources paid on validation success, not refunded on interrupt
 
 ### __Combat Integration Points__
 
@@ -850,119 +849,45 @@ class CancellationThrottle {
 
 ## __Sphere51a Complete Spell Casting Flow__
 
-### __Phase 1: Initiation (Player Action → Server Validation)__
+### __Phase 1: Immediate Target Selection (Player Action → Server Prompt)__
 
 __Client-side Trigger:__
+- Player clicks spell icon in spellbook/wand/reciting
+- Minimally validates caster (alive, no paralyze)
+- Instantly creates SpellTarget<T> and assigns to prompt target selection
 
-- Player clicks spell icon in spellbook
-- Or uses spell hotkey/command (`"[spellname]"`)
-- Or voice command via speech input
-
-__Server Path #1: SUCCESS - Spell Initiated__
-
-Client: Spell Trigger --> Server: InitiateSpellcast(caster, spell) Server: Check FSM state == Idle --> Validate Requirements --> Consume Resources --> State = Initiated
-
-__Server Path #2: FAILURE - Already Casting__
-
-State != Idle --> Return Fail: "Currently casting or invalid state"
-
-__Server Path #3: FAILURE - Requirements Not Met__
-
-ValidateSpellRequirements() Fails --> Cleanup State --> Return Fail: error message Error Types: Insufficient mana/reagents, invalid skills, spell on cooldown, etc.
-
-__Server Path #4: FAILURE - Interrupt Throttled__
-
-Throttle.CanCast() == false --> Return Fail: "Casting too rapidly" Reason: >3 interrupts per second (anti-spam protection)
-
-### __Phase 2: Targeting Sequence (Client Cursor → Server Validation)__
+### __Phase 2: Target Validation & Commitment__
 
 __Client Flow:__
+- Target cursor appears immediately
+- Player selects target
 
-- Server initiates → Client receives spell cursor packet
-- Target cursor appears (blue glow/selection modes)
-- Player moves cursor over valid target/location
-- Player clicks to select
+__Server Validation:__
+- Check LOS, range, target validity, mana/reagents available (DO NOT consume yet)
+- If validation fails or target disappears: Silent abort, no fizzle
 
-__Targeting Modes:__
+__Success: Resource Commitment__
+- Consume mana, reagents, scrolls/wands, clear hands
+- Set SpellState.Casting, block further actions except movement
+- Start cast delay timer (caster can move freely)
 
-- __Target Mobile__: Players, NPCs, monsters
-- __Target Ground__: Area effect locations
-- __Target Item__: For spells requiring items
-- __Target Self__: Automatic self-target
+### __Phase 3: Interruptible Cast Delay__
 
-__Server Path #5: SUCCESS - Targeting Validated__
+__Timing:__ Normal Faster Casting calculations, caster movable
 
-Client: Send TargetingInfo --> Server: ValidateTargeting() LOS Check PASS --> Range Check PASS --> Store TargetInfo --> State = Preparing --> Schedule 1400ms Delay
+__Interrupt Conditions:__ Any action during SpellState.Casting
+- Starting another spell (SpellTarget.OnTarget() call)
+- Using bandages
+- Toggling war mode
+- Any other system disturb
 
-__Server Path #6: FAILURE - Line of Sight__
+__Interrupt Effect:__ Always DoFizzle() - wastes consumed resources
 
-LOSEngine.CheckLOS() FAIL --> InterruptSpell(reason: "Target not in LOS")
+### __Phase 4: Final Execution__
 
-__Server Path #7: FAILURE - Out of Range__
+__Success Path:__ CheckFizzle() passes → Apply spell effects
 
-Distance > Spell.Range --> InterruptSpell(reason: "Target out of range: X vs Y")
-
-### __Phase 3: Animation Delay (1400ms Execution Window)__
-
-__Server Flow:__
-
-- State = Preparing
-- 50Hz ProcessMicrotick monitors timers
-- Animation effects sent to client (visual feedback)
-
-__During Delay - Continuous Monitoring:__
-
-50Hz Checks --> CastDelayEndsAt reached? --> No: Continue Checks --> Yes: State = Casting
-
-__Interrupt Possibility #1: Early Termination (ML Prediction)__
-
-CancelLogicEngine running every microtick: - Cast time > 150% expected → Recommend cancel (89% confidence) - Target evasion detected (moved >2 tiles) → 90% confidence cancel - Low success rate (<30% over 10 casts) → 80% confidence cancel - Player chooses to cancel or auto-cancel based on recommendations
-
-__Interrupt Possibility #2: Combat/Environmental__
-
-- __Movement__: Allowed in early phase, interrupt penalty after 50%
-- __Damage Taken__: Should interrupt (implementation gap identified)
-- __Spell Interrupted__: Called from external systems
-
-### __Phase 4: Execution & Resolution__
-
-__Server Path #8: SUCCESS - Spell Resolution__
-
-Delay Complete --> ExecuteSpellEffect() async --> Spell logic runs --> Set CastCompletedAt --> 50Hz monitor completion Completion reached --> Publish Completed Event --> Cleanup State --> State = Idle
-
-__Server Path #9: EXECUTION FAILURE__
-
-ExecuteSpellEffect throws Exception --> SpellResult = Failure --> Error logged --> Set CastCompletedAt --> Cleanup
-
-### __Interrupt Flow (Zero-Penalty Policy)__
-
-__Any Point After Initiation:__
-
-InterruptSpell() called --> RefundSpellResources() --> UpdateThrottle() --> Publish Interrupted Event --> Cleanup State
-
-__Interrupt Reasons:__
-
-- Targeting failures (LOS/range)
-- ML early termination recommendations
-- Combat interrupts (damage/movement) - partially implemented
-- Player cancellation
-- Environmental factors
-
-### __Completion Outcomes__
-
-__SUCCESS:__
-
-- Spell effect applied to target
-- Resources consumed permanently
-- Combat effects active
-- Cooldown begins
-
-__FAILURE (with refund):__
-
-- All resources refunded (zero-penalty)
-- Spell state reset
-- Interrupt logged and throttled
-- Player can immediately retry
+__Failure Path:__ CheckFizzle() fails → DoFizzle() - wastes consumed resources
 
 ### __Edge Cases & Special Flows__
 

@@ -167,11 +167,24 @@ Combat actions that cause spell fizzle:
 
 # 4. Spell System
 
-## 4.1 Sphere-Style Casting Flow
+## 4.1 Sphere-Style Casting Flow (Revised)
 
 ```
-OSI Style:    Cast → Freeze → Target → Resolution
-Sphere Style: Target → Cast → Free Movement → Resolution (51alpha uses this)
+Original OSI:    Cast → Freeze → Target → Resolution
+51alpha Flow:     Player Action → Spell.Cast() → SpellTarget created → Immediate Target Selection
+                                                                                                  ↓
+                                                                                            Target Selected → Spell.Target()
+                                                                                                  ↓
+                                                                                        CheckSequence() → Validation (no consumption)
+                                                                                                  ↓
+                                                    [Validation Success: Start Casting & Consume] or [Fail/Target Disappears: Do Nothing]
+
+                                                                                           ↓ (on Success)
+                                                                                        SpellState.Casting (interruptible: ANY disturb = FIZZLE; movable)
+                                                                                                  ↓
+                                                                                        [Cast Delay]
+                                                                                                  ↓
+                                                                                CastTimer.OnTick() → CheckFizzle() → [Success: Execute] or [Fail: DoFizzle]
 ```
 
 ## 4.2 Spell State Machine
