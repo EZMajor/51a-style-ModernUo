@@ -98,7 +98,7 @@ Catches are split into **soft-gated** (reduced without a talisman) and **hard-ga
 | **WhitePearl + shard mat** | soft | ❌ | 0.3% | 0.6% | 0.9% | 1.2% | 1.5% |
 | **Fabled net / Leviathan summon** | hard | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
 | **Leviathan artifact roll** | hard | — | — | — | 25% | 33% | 45% |
-| **Sea-Cured / Kraken / Leviathan hides** (armor mats) | hard | ❌ | carve serpents | carve serpents | carve Kraken | carve Kraken | carve Leviathan |
+| **Mariner's Leather hides** (armor mat) | hard | ❌ | carve serpents (low yield) | carve serpents | carve Kraken | carve Kraken | carve Leviathan (high yield) |
 
 > **Rule of thumb:** without an active Mariner talisman, deep-sea fishing is *stock Britannia fishing minus the good parts* — fish, boots, junk. Everything that drives the economy or the chase is talisman-locked. This is what makes it "hard to do without the talisman."
 
@@ -162,34 +162,70 @@ The Mariner's Leather line supplies the raw **physical + cold** resist; the set 
 Target for a **full T5 Mariner** vs Leviathan:
 - Effective mitigation vs sea ≈ **70 physical / ~65 cold** (Mariner's Leather resists + set bonus, capped at 70), plus talisman −20% taken.
 - Leviathan's 25–33 hits land for a survivable but real chunk; the **cold breath** (30 cold AoE) is the pressure test — T5 set grants **breath resistance** (halves the slow/damage), not immunity.
-- Result: a skilled T5 can farm Leviathans solo in ~2–4 minutes each; a T3 in Krakenhide can *start* but will struggle and need consumables. Nothing below T3 can summon one at all.
+- Result: a skilled T5 in a **Barbed-runic Mariner's Leather** suit can farm Leviathans solo in ~2–4 minutes each; a T3 in a **Spined/Horned-runic** Mariner's suit can *start* but will struggle and need consumables. Nothing below T3 can summon one at all.
+
+### Fisher-fighter builds — how players actually run this
+
+On other shards the fisher-fighter is a real, popular archetype. The recurring patterns (for inspiration):
+- **Archer / "hide-and-shoot" fisher** — GM Fishing + Archery/Tactics/Anatomy/Healing + a little Magery, **Hiding** while sailing to avoid aggro, then shooting the serpents/elementals that surface ([UO Second Age forums](https://forums.uosecondage.com/viewtopic.php?t=46814)).
+- **Fisher-tamer** — Fishing 120 + Taming/Lore/Vet (+Eval) so a pet tanks the sea spawn while you fish ([UO Outlands templates](https://wiki.uooutlands.com/Templates), [UO Addicts builds](https://uoaddicts.com/builds/uo-outlands)).
+- **Bard fisher** — Provocation/Peacemaking to turn or pacify sea creatures (safest solo).
+- **Harpooner (Outlands model)** — the Fishing skill itself grants **ranged "ocean weapons"** whose special attack is **Impale** (hits nearby targets too); leather **fishing nets are tailor-crafted from the leather tiers** ([UO Outlands Fishing wiki](https://wiki.uooutlands.com/Fishing)). This is the closest match to our leather-armor sea-hunter fantasy.
+
+**On Sphere51a everyone GMs every skill, so a "template" isn't a skill spread — it's a talisman + gear identity.** The Mariner talisman and Mariner's Leather suit support all four of the above (leather fits archer/dexer/bard/tamer alike; the vs-sea bonuses are combat-style agnostic). We lean into the **harpooner** as the signature.
+
+### Signature weapon — the Harpoon (ocean weapon)
+
+A new craftable **Harpoon** (tailor/tinker; also a fishing catch) is the Mariner's flagship weapon, borrowing Outlands' model:
+- Ranged throwing weapon usable **with a fishing pole’s stamina economy** (no mount needed — you already can't fish mounted).
+- Special: **Impale** — a short-range line/AoE strike, ideal for the 2–5 creature net swarms.
+- The talisman's vs-sea `+dmg%` (Part 3) and T3 **Harpoon** / T5 **Krakensbane** abilities are tuned around it, so a leather Mariner out-damages a plate character *against sea creatures only*.
+- Non-Mariners can swing it, but without an active Mariner talisman it gets none of the vs-sea scaling — an ordinary, unremarkable weapon.
 
 ---
 
 ## Part 4 — The Mariner's Leather armor path
 
-A new leather line obtained by **carving sea creatures**, tuned to the ocean threat (physical + cold), and completed by a **set bonus** that only fires vs sea creatures and scales with talisman tier.
+**One** new leather material — **Mariner's Leather** — obtained by carving sea creatures, tuned to the ocean threat (physical + cold). It follows our existing standards exactly: it is a `CraftResource`, its **base resist profile** is its identity, and its **magic-property tier comes from the existing runic sewing kits — of which there are only three** (Spined, Horned, Barbed). We do **not** add a 4th runic tier.
 
-### New hide resources (`Misc/ResourceInfo.cs` — new `CraftAttributeInfo` tiers)
+### How our leather tiers actually work (the standard we follow)
 
-Hides use the existing carve pipeline: add new values to the `HideType` enum (e.g. `Sea`, `Kraken`, `Leviathan`) and set `Hides`/`HideType` on the sea creatures, so a `SkinningKnife` cut yields the new cut leather (mirrors `BaseCreature.OnCarve`). Which tier drops is hard-gated by Mariner tier (Part 1):
+Each leather resource carries two things (`Misc/ResourceInfo.cs`): a flat **base resist** bonus (`ArmorXResist`) applied to every crafted piece, and the **runic roll parameters** (`RunicMinAttributes`/`MaxAttributes`, `RunicMinIntensity`/`MaxIntensity`) used when a matching **runic sewing kit** enchants the piece. The runic kit is where the *stat tier* comes from. Confirmed values:
 
-| Resource | Carved from | Phys | Fire | Cold | Poison | Energy | Notes |
+| Leather tier | Base resist (P/F/C/Po/E) | Runic kit props | Runic intensity (ML) | Kit charges |
+|---|---|---|---|---|
+| Regular | 0 / 0 / 0 / 0 / 0 | — | — | — |
+| **Spined** | **+5** / 0 / 0 / 0 / 0 (+40 Luck) | 1–3 | 40–100% | 45 |
+| **Horned** | +2 / +3 / +2 / +2 / +2 | 3–4 | 45–100% | 30 |
+| **Barbed** | +2 / +1 / +2 / +3 / **+4** | 4–5 | 50–100% | 15 |
+
+So the three runic sewing kits (Spined / Horned / Barbed) **are** the three stat tiers. `RunicSewingKit` charges = `60 − type*15` (`Rewards.cs:843`). Note the runic pipeline already special-cases leather: for `RegularLeather..BarbedLeather` it removes Lower-Requirements and Durability-Bonus from the roll pool (`BaseRunicTool.cs:643`).
+
+### Where Mariner's Leather stands in the list
+
+It stands at the **top of the leather list, as a premium 4th material** — but it introduces **no new runic tier**. Its magic stats are rolled with the **existing three runic kits**, exactly like Barbed. What makes it distinct is a **sea-tuned base resist profile** (physical + cold), which no vanilla leather offers (Spined is pure physical; nothing vanilla exceeds +2 cold):
+
+```
+Regular  <  Spined  <  Horned  <  Barbed  <  Mariner's   (material list)
+                    Spined / Horned / Barbed              (the 3 runic stat tiers — unchanged)
+```
+
+| New resource (`Misc/ResourceInfo.cs`, new `CraftResource` + `CraftAttributeInfo`) | Phys | Fire | Cold | Poison | Energy | Total | Runic |
 |---|---|---|---|---|---|---|---|
-| **Sea-Cured Leather** | Sea/Deep Sea Serpent, Water Elemental | +4 | +1 | +3 | — | — | entry sea armor (T1–T2) |
-| **Krakenhide** | Kraken | +5 | +2 | +4 | — | — | mid sea armor (T3–T4) |
-| **Leviathan Hide** | Leviathan | +6 | +3 | +5 | +1 | — | end-game (T5); rare per kill |
+| **Mariner's Leather** | +4 | +1 | +4 | +1 | +1 | 11 | uses existing Spined/Horned/Barbed kits |
 
-These deliberately out-physical and out-cold vanilla leather (Spined is +5 phys flat; nothing vanilla exceeds +2 cold on leather) while staying under metal-plate totals so they don't invalidate other armor paths outside sea content.
+Total (11) is a **sidegrade**, not power-creep — equal to Horned, under Barbed (12) — but redistributed into physical + cold, i.e. best-in-slot **only vs the sea**. Your suit's stat tier is still the kit you finish it with: a **Barbed-runic Mariner's Leather** suit (4–5 mods @ 50–100% + sea resists) is the end-game piece.
 
-### Crafting (`Engines/Craft/DefTailoring.cs`)
-- Standard tailoring craft; the new hides enhance existing leather pieces via the normal `Enhance` flow (`Engines/Craft/Core/Enhance.cs`), which can fail/destroy — an intentional resource sink.
-- Exceptional bonus applies normally. A full suit = 6 pieces (chest, arms, gloves, gorget, legs, helm) in the Leather material family.
-- **Bootstrap solution to the chicken-and-egg:** T3 lets you summon & kill Leviathans while wearing **Krakenhide** (farmed from the freely-summonable Kraken via nets), then you upgrade to **Leviathan Hide** as kills accumulate. No hard wall.
+### Acquisition & crafting (`Engines/Craft/DefTailoring.cs`)
+- **Hides:** add one `HideType.Mariner` value; set `Hides`/`HideType` on sea creatures so a `SkinningKnife` cut yields **Mariner's Leather** (mirrors `BaseCreature.OnCarve`). Leviathan yields the most; serpents/Kraken yield less. Acquisition is hard-gated by Mariner tier (Part 1) — everyone can GM Tailoring, but only an active Mariner can *get the hide*, which is the whole "talisman gives the value" principle.
+- **Sub-resource:** add Mariner's Leather to the tailoring `AddSubRes` list (skill gate moot on a GM-all shard; the real gate is hide access).
+- **Runic range:** extend the leather special-case (`BaseRunicTool.cs:643`) to include Mariner's Leather so it behaves like leather (no lower-req / durability mods).
+- **Enhance / exceptional:** standard `Enhance` flow (can fail/destroy — a sink) and the normal exceptional resist distribution (14–15 pts, or 6 under runic) apply unchanged.
+- **Bootstrap:** T3 lets you summon & kill Leviathans in a **Spined- or Horned-runic** Mariner's suit (hides farmed from freely-summoned Kraken/serpents), then re-craft to **Barbed-runic** as Mariner's Leather accumulates. No hard wall.
 
 ### The Mariner Set bonus (new system: `MarinerSet`)
 
-A new `MarinerSetBonus` service counts equipped Mariner's Leather pieces (any of the three hide tiers) and, **while a Mariner talisman is equipped and active**, applies escalating bonuses that only matter vs `ISeaCreature`. Set bonuses are **PvM-only** and disable in PvP with the talisman; the underlying armor resist is passive and always on.
+There is **no set-bonus system in the codebase today**, so this is a new Sphere51a mechanic (consistent with how our other systems are added). A `MarinerSetBonus` service counts equipped **Mariner's Leather** pieces and, **while a Mariner talisman is equipped and active**, applies escalating bonuses that only matter vs `ISeaCreature`. Set bonuses are **PvM-only** and disable in PvP with the talisman; the armor's own resist is passive and always on.
 
 | Pieces | Set bonus (vs sea creatures unless noted) |
 |---|---|
@@ -197,12 +233,12 @@ A new `MarinerSetBonus` service counts equipped Mariner's Leather pieces (any of
 | 5 | +10 damage vs sea creatures; +5% Hit Stamina Leech vs sea creatures |
 | 6 (full) | **Sea Legs**: cold-breath resistance (halve Leviathan/Kraken cold breath), water-walk while a fishing pole is equipped, +5% all sea bonuses |
 
-Set bonus magnitude also scales with talisman tier via a simple multiplier (`0.4×` at T1 → `1.0×` at T5) so a full suit on a T1 is a preview, and a full suit on a T5 is the payoff. Resist top-ups still cannot exceed the 70 cap.
+Set magnitude scales with talisman tier (`0.4×` @ T1 → `1.0×` @ T5), so a full suit previews at T1 and pays off at T5. Resist top-ups still respect the **70 cap** (`Mobile.MaxPlayerResistance`).
 
 ### Why leather (not plate)
-- Thematic: anglers/sailors wear leather, not plate.
-- Balance: sea creatures are ~physical, which plate already resists well — routing the sea power budget through *leather-only, sea-only* bonuses means the Mariner is strong at its job without buffing general plate PvM.
-- Synergy: leather keeps stamina/swing high (no Meditation/med-armor conflict), matching the dexer sea-hunter fantasy.
+- Thematic: anglers/sailors wear leather.
+- Balance: sea creatures are ~physical, which plate already resists well — routing the sea power budget through *leather-only, sea-only* bonuses keeps the Mariner strong at its job without buffing general plate PvM.
+- Synergy: leather keeps stamina/swing high (no med-armor penalty), matching the dexer/harpooner sea-hunter fantasy (Part 5).
 
 ---
 
@@ -225,7 +261,7 @@ The "max tier feels good, worth wearing, not super easy" target:
 ## Part 6 — Economy & acquisition
 
 - **Talisman acquisition:** craft from relics (per `PvM_Talismans_Design.md`) or a fishing-quest reward; tradeable until first equip, then bound to the earner's Fathoms progression.
-- **Anglers are suppliers:** rare-hue nets, White Pearls, a shard-unique catch (e.g. *Abyssal Roe* → alchemy/cooking), Sea-Cured/Kraken/Leviathan hides, and Leviathan artifacts all originate from Mariners, feeding tailoring, cooking, aquarium décor, and the artifact market. Value comes from the wider economy, not a solo stat stick.
+- **Anglers are suppliers:** rare-hue nets, White Pearls, a shard-unique catch (e.g. *Abyssal Roe* → alchemy/cooking), **Mariner's Leather hides**, and Leviathan artifacts all originate from Mariners, feeding tailoring, cooking, aquarium décor, and the artifact market. Value comes from the wider economy, not a solo stat stick.
 - **Sinks:** enhancing destruction, pole/net consumption, boat upkeep, travel.
 
 ---
@@ -243,9 +279,11 @@ The "max tier feels good, worth wearing, not super easy" target:
 | Gate & scale artifact roll by tier | `Leviathan.OnDeath` | Low |
 | Award Fathoms on catch / sea kill | `Fishing.OnHarvestFinished` (`:473`), creature `OnDeath` | Med |
 | `ISeaCreature` marker on 5 creatures | each creature file | Low |
-| New hide `CraftAttributeInfo` tiers | `Misc/ResourceInfo.cs` | Low |
-| Hide drops on sea-creature carve (tier-gated) | creature `Carve`/loot | Low |
-| Mariner's Leather craftables | `Engines/Craft/DefTailoring.cs` | Low |
+| One new `CraftResource` + `CraftAttributeInfo` (Mariner's Leather; reuses existing runic tiers) | `Misc/ResourceInfo.cs` | Low |
+| Extend leather range special-case to include Mariner's Leather | `BaseRunicTool.cs:643` | Low |
+| One new `HideType.Mariner`; hide drops on sea-creature carve (tier-gated) | `HideType` enum, creature `OnCarve`/loot | Low |
+| Mariner's Leather sub-resource + craftables | `Engines/Craft/DefTailoring.cs` | Low |
+| Harpoon ocean weapon + Impale special | new `Items/Weapons/…`, weapon ability | Med |
 | `MarinerSetBonus` service + resist/combat hooks | new `Systems/Sphere51a/MarinerSet.cs`, `BaseArmor`/`AOS.cs` | High |
 | vs-sea damage bonus/reduction in damage pipeline | `Misc/AOS.cs` / `BuildManager.ApplyTalismanBonus` | High |
 
@@ -269,7 +307,8 @@ Mark all edits `//Sphere-style edit` per project convention.
 | Sea Legs | 6-pc T5 vs Leviathan breath | cold breath halved; water-walk with pole |
 | Resist cap | stacked cold | capped at 70 |
 | Fathom cap | farm >400/hr | overflow not credited |
-| Enhance destroy | enhance with Leviathan Hide | can fail/destroy piece |
+| Enhance destroy | enhance with Mariner's Leather | can fail/destroy piece |
+| Runic tier | Barbed-runic vs Spined-runic Mariner's suit | Barbed rolls 4–5 mods @50–100%; Spined 1–3 @40–100% |
 
 ---
 
@@ -307,5 +346,11 @@ public double MarinerSetTierScaleMin          { get; set; } = 0.4; // T1 multipl
 
 ## Change Log
 
+### v1.1.0 - 2026-07-03
+- **Armor corrected to shard standards:** collapsed the three invented hide tiers into a **single** Mariner's Leather `CraftResource`; stat tiers now come from the **existing three runic sewing kits** (Spined/Horned/Barbed) — no new runic tier. Documented the confirmed runic values (props/intensity/charges) and placed Mariner's Leather at the top of the material list as a physical/cold **sidegrade** (total 11).
+- Added **fisher-fighter build archetypes** (archer/hide-and-shoot, fisher-tamer, bard, harpooner) drawn from UO Outlands/Second Age, framed for a GM-all-skills shard where identity = talisman + gear.
+- Added the signature **Harpoon** ocean weapon with an **Impale** special (Outlands-inspired), tuned around the talisman's vs-sea bonuses.
+- Updated Part 1 mats row, encounter math, economy, testing matrix, and code-hook table accordingly.
+
 ### v1.0.0 - 2026-07-03
-- Initial full playstyle design: fishing reward re-gate (hard SOS/Leviathan/artifact, soft big/magic fish), 5-tier Mariner talisman with Fathoms progression, sea-creature & Leviathan combat bonuses, linked Mariner's Leather armor path (new hide tiers + set bonus tuned to physical/cold), end-game balance targets, economy, PvP integration, and code hook map.
+- Initial full playstyle design: fishing reward re-gate (hard SOS/Leviathan/artifact, soft big/magic fish), 5-tier Mariner talisman with Fathoms progression, sea-creature & Leviathan combat bonuses, linked Mariner's Leather armor path, end-game balance targets, economy, PvP integration, and code hook map.
