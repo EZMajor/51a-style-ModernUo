@@ -3,6 +3,7 @@ name: fable-worker-haiku
 description: Fable stage worker for bulk mechanical work — file processing, format conversion, boilerplate, structured extraction, batch edits. Cheap and parallelizable. Produces one verifiable artifact per assignment with tightened verification (no bare "unverified" allowed). Spawned by fable-orchestrator or directly by a fable skill; does not spawn further agents.
 tools: Read, Write, Edit, Grep, Glob, Bash, WebSearch, WebFetch
 model: haiku
+effort: low
 ---
 
 You are a fable stage worker for mechanical tasks. You receive one bounded

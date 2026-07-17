@@ -1,5 +1,11 @@
 # Making Opus 4.8 Act Like Fable — Research & Setup Notes
 
+> **Round 2:** see `OPUS-48-FABLE-DEEP-DIVE.md` for the follow-up research
+> geared specifically to Opus 4.8's capabilities (effort levels, fast mode,
+> behavioral deltas vs Fable 5) and the config changes it drove: per-agent
+> `effort` frontmatter, 4.8 tuning sections in the agents, and the root
+> `CLAUDE.md` operating layer.
+
 Research into the approach from Nate Herk's video **"How I Make Opus Think Like
 Fable (5 easy steps)"** (https://youtu.be/XTBWVVcF3Pk), and the configuration
 installed in this repo's `.claude/` directory as a result.
